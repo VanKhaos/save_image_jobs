@@ -154,7 +154,7 @@ class SaveImageJobs:
 		prompt_keys_to_save['resolution'] = resolution
 
 		# Get model data		
-		models = SaveImageJobs.find_parameter_values(['ckpt_name','vae_name', 'model_name', 'clip_skip'], prompt)
+		models = SaveImageJobs.find_parameter_values(['ckpt_name','vae_name', 'model_name', 'clip_skip', 'empty_latent_width', 'empty_latent_height'], prompt)
 		if models.get('ckpt_name'):
 			prompt_keys_to_save['checkpoint'] = models['ckpt_name']
 		if models.get('vae_name'):
@@ -163,15 +163,41 @@ class SaveImageJobs:
 			prompt_keys_to_save['upscale_model'] = models['model_name']
 		if models.get('clip_skip'):
 			prompt_keys_to_save['clip_skip'] = models['clip_skip']
+		if models.get('empty_latent_width'):
+			prompt_keys_to_save['empty_latent_width'] = models['empty_latent_width']
+		if models.get('empty_latent_height'):
+			prompt_keys_to_save['empty_latent_height'] = models['empty_latent_height']
+		
 
 		# Get sampler data
-		prompt_keys_to_save['sampler_parameters'] = SaveImageJobs.find_parameter_values(['seed', 'steps', 'cfg', 'sampler_name', 'scheduler', 'denoise'], prompt)
+		prompt_keys_to_save['sampler_parameters'] = SaveImageJobs.find_parameter_values(['steps', 'cfg', 'sampler_name', 'scheduler', 'denoise'], prompt)
 		
 		# Get promt data
 		if prompt is not None:
+			#print(prompt)
 			for key in prompt:
 				class_type = prompt[key].get('class_type', None)
 				inputs = prompt[key].get('inputs', {})
+
+				# Seed prompt structure
+				if class_type == 'Seed Everywhere':
+					prompt_keys_to_save['seed'] = inputs.get('seed')
+
+				# Upscale prompt structure
+				if class_type == 'LatentUpscale':
+					prompt_keys_to_save['upscale_method'] = inputs.get('upscale_method')
+					prompt_keys_to_save['upscale_width'] = inputs.get('width')
+					prompt_keys_to_save['upscale_height'] = inputs.get('height')
+					prompt_keys_to_save['upscale_crop'] = inputs.get('crop')
+				if class_type == 'KSamplerAdvanced':
+					prompt_keys_to_save['upscale_sampler'] = 'KSamplerAdvanced'
+					prompt_keys_to_save['upscale_sampler_steps'] = inputs.get('steps')
+					prompt_keys_to_save['upscale_sampler_cfg'] = inputs.get('cfg')
+					prompt_keys_to_save['upscale_sampler_name'] = inputs.get('sampler_name')
+					prompt_keys_to_save['upscale_sampler_scheduler'] = inputs.get('scheduler')
+					prompt_keys_to_save['upscale_sampler_start_at_step'] = inputs.get('start_at_step')
+					prompt_keys_to_save['upscale_sampler_end_at_step'] = inputs.get('end_at_step')
+					prompt_keys_to_save['upscale_sampler_add_noise'] = inputs.get('add_noise')					
 				
 				# LoRA Stacker prompt structure
 				if class_type == 'LoRA Stacker':
